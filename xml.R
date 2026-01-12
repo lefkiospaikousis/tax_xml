@@ -300,9 +300,8 @@ add_entity_seller <- function(parent, vendor, country_code) {
 
   # Company Registration Number (IN = Identification Number)
   if (!is.na(vendor$company_reg) && vendor$company_reg != "N/A") {
-    # Extract numeric part from HE 123456
-    reg_num <- gsub("^[HΗ]E\\s*", "", vendor$company_reg, ignore.case = TRUE)
-    in_node <- xml_add_child(ent_seller_id, "dpi:IN", reg_num)
+    # Use full registration number as-is (e.g., "HE 123456")
+    in_node <- xml_add_child(ent_seller_id, "dpi:IN", vendor$company_reg)
     xml_set_attr(in_node, "issuedBy", country_code)
     xml_set_attr(in_node, "INType", "BRN")  # Business Registration Number
   }
