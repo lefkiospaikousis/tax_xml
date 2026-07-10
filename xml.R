@@ -14,48 +14,80 @@ library(lubridate)
 library(uuid)
 
 
-main_path <- "C:/Users/pcuser/OneDrive/Desktop/"
-vendors_file <- file.path(main_path, "PRODUCERS - TAX.xlsx")
+path_main <- "c:/Users/pcuser/OneDrive/IMPROVAST/ACS/tax_xml"
+path_data <- file.path(path_main, 'data')
+path_export <- file.path(path_main, 'exports')
 
-vendors <- read_excel(vendors_file, na = c('', 'NA', 'N/A'))
+vendors <- read_excel(file.path(path_data, "DAC FINAL 2025.xlsx"), na = c('', 'NA', 'N/A'))
+
+#' Parse a per-quarter amount column that mixes numeric, "-", blank and decimal-string values
+parse_amount <- function(x) {
+  x <- as.character(x)
+  x[x %in% c("-", "")] <- NA
+  x <- str_remove_all(x, "[^0-9\\.]")
+  out <- suppressWarnings(as.numeric(x))
+  ifelse(is.na(out), 0, out)
+}
+
+#' Parse a Date-of-Birth value that may arrive as a native Date/POSIXct,
+#' an Excel serial number stored as text (e.g. "26539"), or an ISO date string
+parse_dob <- function(x) {
+  if (inherits(x, "Date") || inherits(x, "POSIXct")) {
+    return(format(as.Date(x), "%Y-%m-%d"))
+  }
+
+  x <- as.character(x)
+  x[x %in% c("N/A", "NA", "")] <- NA
+
+  parsed <- rep(NA_character_, length(x))
+
+  is_serial <- !is.na(x) & grepl("^[0-9]+$", x)
+  parsed[is_serial] <- format(as.Date(as.numeric(x[is_serial]), origin = "1899-12-30"), "%Y-%m-%d")
+
+  is_text_date <- !is.na(x) & !is_serial
+  parsed[is_text_date] <- vapply(x[is_text_date], function(v) {
+    d <- tryCatch(as.Date(v), error = function(e) NA)
+    if (is.na(d)) NA_character_ else format(d, "%Y-%m-%d")
+  }, character(1))
+
+  parsed
+}
 
 vendors <- vendors |>
   mutate(
-    total_income = as.numeric(str_remove_all(`TOTAL INCOME PER YEAR`, "[^0-9\\.]")),
-    total_fees   = as.numeric(str_remove_all(`TOTAL FEES PER YEAR`, "[^0-9\\.]")),
-    transactions = as.integer(`TOTAL AMOUNT OF TRANSACTION`),
-    iban         = str_remove_all(IBAN, "\\s+"),
-    is_company   = str_detect(PRODUCER, regex("LTD|LIMITED|COMPANY", ignore_case = TRUE))
+    across(c(Q1_INCOME, Q2_INCOME, Q3_INCOME, Q4_INCOME,
+             Q1_FEES, Q2_FEES, Q3_FEES, Q4_FEES,
+             Q1_TRANSACTIONS, Q2_TRANSACTIONS, Q3_TRANSACTIONS, Q4_TRANSACTIONS),
+           parse_amount),
+    iban       = str_remove_all(IBAN, "\\s+"),
+    dob        = parse_dob(`DATE OF BIRTH`),
+    id_number  = ifelse(is.na(ID), NA_character_, format(ID, scientific = FALSE, trim = TRUE))
   ) |>
 
   select(
     producer = PRODUCER,
-    type_topic = `TYPE/TOPIC OF THE EVENT`,
     address = ADDRESS,
     email = `EMAIL ADDRESS`,
     company_reg = `COMPANY REGISTRATION NUMBER`,
+    id_number,
     tax_number = `TAX NUMBER`,
     country_tax = `COUNTRY TAX RESIDENCE`,
-    dob = `DATE OF BIRTH`,
+    dob,
     iban,
     bank = BANK,
-    total_income,
-    total_transactions = transactions,
-    total_fees,
-    third_party = `THIRD PARTY INVOLVEMENT IN PAYMENT (YES OR NO)`
+    income_q1 = Q1_INCOME, income_q2 = Q2_INCOME, income_q3 = Q3_INCOME, income_q4 = Q4_INCOME,
+    fees_q1 = Q1_FEES, fees_q2 = Q2_FEES, fees_q3 = Q3_FEES, fees_q4 = Q4_FEES,
+    trans_q1 = Q1_TRANSACTIONS, trans_q2 = Q2_TRANSACTIONS, trans_q3 = Q3_TRANSACTIONS, trans_q4 = Q4_TRANSACTIONS
   )
 
 
 
 # NEED
 
-# not empty transactions and income and fees
+# keep only vendors with reportable annual income
 vendors <- vendors |>
-  filter(!is.na(total_income) & total_income > 0) |>
-  mutate(
-    total_fees = ifelse(is.na(total_fees), 0, total_fees),
-    total_transactions = ifelse(is.na(total_transactions), 1, total_transactions)
-  )
+  mutate(annual_income = income_q1 + income_q2 + income_q3 + income_q4) |>
+  filter(annual_income > 0)
 
 
 # ============================================================================
@@ -82,25 +114,11 @@ reporting_config <- list(
   transmitting_country = "CY",
   receiving_country = "CY",
   reporting_period = "2024-12-31",
+  reporting_year = "2024",  # PLACEHOLDER - set to the year being reported; used in DocRefId/MessageRefId
   message_type_indic = "DPI401"  # DPI401 = New data, DPI402 = Corrected data
 )
 
 placeholder_dob <- "1900-01-01"  # Placeholder DOB for individuals without DOB
-# ============================================================================
-# SAMPLE VENDOR DATA
-# In production, load from Excel/CSV: vendors <- read_csv("vendors.csv")
-# ============================================================================
-
-# vendors <- tibble::tribble(
-#   ~producer, ~type_topic, ~address, ~email, ~company_reg, ~tax_number, ~country_tax, ~dob, ~iban, ~bank, ~total_income, ~total_transactions, ~total_fees, ~third_party,
-#   "A.P. ROYALE DANCE EDUCATION CENTER LTD", "DANCE", "Γρηγόρη Αυξεντίου, 67, Κοκκινοτριμιθιά 2660, Λευκωσία, Κύπρος", "info@royaledance.com", "ΗΕ 425833", NA, "CYPRUS", NA, "CY29 0020 0195 0000 3570 3607 0809", "BANK OF CYPRUS", 13395.00, 1, 8.56, NA,
-#   "A.P. SOIREES AND SOCIALS PRODUCT LTD", "MUSIC", "Αντωνίου Μπλάκη, 5, Flat 201 8020, Πάφος, Κύπρος", "moisis_22-06@hotmail.com", "HE 327564", NA, "CYPRUS", NA, "CY64 0080 0504 0000 0000 0222 8380", "ASTRO BANK", 41010.00, 1, 139.22, NA,
-#   "A.P.P.Y.SOUND & LIGHTING LTD", "MUSIC", "Θηβών, 3, Παλαιομέτοχο 2682, Λευκωσία, Κύπρος", "primavistasound@gmail.com", "ΗΕ 460722", NA, "CYPRUS", NA, "CY81 0020 0195 0000 3570 4212 1121", "BANK OF CYPRUS", 14475.00, 1, 303.26, NA,
-#   "ALEXANDROS MARTIDES GEORGIOU", "THEATRE", NA, "alexandrosgmartides@hotmail.com", NA, NA, "CYPRUS", NA, "CY87 0050 0266 0002 6610 F732 2201", "HELLENIC BANK", 21585.00, 1, 162.66, NA,
-#   "ALPHA SQUARE ORGANISATION LIMITED", "THEATRE", "Λαμίας, 11, Flat 403 2001, Λευκωσία, Κύπρος", NA, "HE 348311", NA, "CYPRUS", NA, "CY60 0020 0195 0000 3570 2128 3571", "BANK OF CYPRUS", 33024.00, 1, 196.70, NA,
-#   "CHRISTINA HADJICHRISTOU MARKIDOU", "DANCE", "Αγγέλων 1, 6057", "etoile@primehome.com", "ID 668431", NA, "CYPRUS", NA, "CY59 0050 0003 4410 A320 0701", "HELLENIC BANK", 7800.00, 1, 26.98, NA,
-#   "ANDREAS TSESTOS", "THEATRE", NA, "thecomedyprojectcy@gmail.com", NA, NA, "CYPRUS", NA, "LT17 3250 0646 3332 5234", "REVOLUT", 500.00, 1, 0.00, NA
-# )
 
 # ============================================================================
 # HELPER FUNCTIONS
@@ -125,20 +143,23 @@ generate_doc_ref_id <- function(country, year) {
 
 #' Generate Message Reference ID
 #' Format: {TransmittingCountry}{Year}{ReceivingCountry}-{UUID}
-generate_message_ref_id <- function(transmitting, receiving) {
-  year <- format(Sys.Date(), "%Y")
+generate_message_ref_id <- function(transmitting, receiving, year) {
   paste0(transmitting, year, receiving, "-", uuid::UUIDgenerate())
 }
 
 #' Check if vendor is an entity (company) vs individual
-#' Returns TRUE for companies (HE/ΗΕ prefix), FALSE for individuals
+#' Returns TRUE for companies (HE/ΗΕ prefix, in any Latin/Greek letter mix), FALSE for individuals
+#' Built from explicit Unicode code points (not literal Greek characters) so the
+#' regex is not corrupted by non-UTF-8 native locales/codepages when the script is sourced.
 is_entity <- function(company_reg) {
 
   if (is.na(company_reg) || company_reg == "N/A" || company_reg == "") {
     return(FALSE)
   }
-  # HE or ΗΕ (Greek H) prefix indicates a registered company
-  grepl("^[HΗ]E\\s*\\d+$", company_reg, ignore.case = TRUE)
+  greek_eta <- intToUtf8(0x0397)      # Η, Greek capital Eta - looks like Latin H
+  greek_epsilon <- intToUtf8(0x0395)  # Ε, Greek capital Epsilon - looks like Latin E
+  he_regex <- paste0("^[H", greek_eta, "][E", greek_epsilon, "]\\s*\\d+$")
+  grepl(he_regex, company_reg, ignore.case = TRUE)
 }
 
 #' Clean IBAN by removing spaces
@@ -171,11 +192,15 @@ map_country_name_to_code <- function(country_name) {
   # return(code)
 
 
+  original_name <- country_name
   country_name <- countrycode::countryname(country_name)
 
   code <- countrycode::countrycode(country_name, 'country.name', destination = 'iso2c')
 
-  if (is.na(code)) return("CY")  # Default to Cyprus
+  if (is.na(code)) {
+    message("Could not map country '", original_name, "' to an ISO code - defaulting to CY")
+    return("CY")  # Default to Cyprus
+  }
 
   return(code)
 
@@ -324,9 +349,12 @@ add_individual_seller <- function(parent, vendor, country_code) {
 
   xml_add_child(ind_seller_id, "dpi:ResCountryCode", country_code)
 
-  # TIN
+  # TIN - prefer TAX NUMBER, fall back to the ID column, else unknown
   if (!is.na(vendor$tax_number) && vendor$tax_number != "" && vendor$tax_number != "N/A") {
     tin_node <- xml_add_child(ind_seller_id, "dpi:TIN", vendor$tax_number)
+    xml_set_attr(tin_node, "issuedBy", country_code)
+  } else if (!is.na(vendor$id_number) && vendor$id_number != "") {
+    tin_node <- xml_add_child(ind_seller_id, "dpi:TIN", vendor$id_number)
     xml_set_attr(tin_node, "issuedBy", country_code)
   } else {
     tin_node <- xml_add_child(ind_seller_id, "dpi:TIN")
@@ -372,69 +400,42 @@ add_individual_seller <- function(parent, vendor, country_code) {
   add_financial_identifier(standard, vendor$iban)
 }
 
-#' Add Relevant Activities (Income, Fees, etc.) to XML
-#' All values placed in Q4 as per user requirement
+#' Add a quarterly block (e.g. Consideration/ConsQn, Fees/FeesQn) to a parent node
+#' @param currency currCode to attach to each element, or NULL for elements without one (NumberOfActivities)
+add_quarterly <- function(parent, block_name, tag, values, currency = "EUR") {
+  block_node <- xml_add_child(parent, paste0("dpi:", block_name))
+  for (q in 1:4) {
+    node <- xml_add_child(block_node, paste0("dpi:", tag, "Q", q), as.character(round(values[q], 0)))
+    if (!is.null(currency)) {
+      xml_set_attr(node, "currCode", currency)
+    }
+  }
+}
+
+#' Add Relevant Activities (Income, Fees, etc.) to XML using true per-quarter amounts
 add_relevant_activities <- function(parent, vendor) {
   activities_node <- xml_add_child(parent, "dpi:RelevantActivities")
 
   # Using PersonalServices for event-related activities
   personal_services <- xml_add_child(activities_node, "dpi:PersonalServices")
 
-  # Consideration (Income) - Q1-Q3 = 0, Q4 = total (INTEGER values)
-  consideration <- xml_add_child(personal_services, "dpi:Consideration")
+  add_quarterly(personal_services, "Consideration", "Cons",
+                c(vendor$income_q1, vendor$income_q2, vendor$income_q3, vendor$income_q4))
 
-  cons_q1 <- xml_add_child(consideration, "dpi:ConsQ1", "0")
-  xml_set_attr(cons_q1, "currCode", "EUR")
+  add_quarterly(personal_services, "NumberOfActivities", "Numb",
+                c(vendor$trans_q1, vendor$trans_q2, vendor$trans_q3, vendor$trans_q4),
+                currency = NULL)
 
-  cons_q2 <- xml_add_child(consideration, "dpi:ConsQ2", "0")
-  xml_set_attr(cons_q2, "currCode", "EUR")
+  add_quarterly(personal_services, "Fees", "Fees",
+                c(vendor$fees_q1, vendor$fees_q2, vendor$fees_q3, vendor$fees_q4))
 
-  cons_q3 <- xml_add_child(consideration, "dpi:ConsQ3", "0")
-  xml_set_attr(cons_q3, "currCode", "EUR")
-
-  cons_q4 <- xml_add_child(consideration, "dpi:ConsQ4", as.character(round(vendor$total_income, 0)))
-  xml_set_attr(cons_q4, "currCode", "EUR")
-
-  # Number of Activities
-  num_activities <- xml_add_child(personal_services, "dpi:NumberOfActivities")
-  xml_add_child(num_activities, "dpi:NumbQ1", "0")
-  xml_add_child(num_activities, "dpi:NumbQ2", "0")
-  xml_add_child(num_activities, "dpi:NumbQ3", "0")
-  xml_add_child(num_activities, "dpi:NumbQ4", as.character(vendor$total_transactions))
-
-  # Fees - Q1-Q3 = 0, Q4 = total (MUST BE INTEGER - round to nearest whole number)
-  fees <- xml_add_child(personal_services, "dpi:Fees")
-
-  fees_q1 <- xml_add_child(fees, "dpi:FeesQ1", "0")
-  xml_set_attr(fees_q1, "currCode", "EUR")
-
-  fees_q2 <- xml_add_child(fees, "dpi:FeesQ2", "0")
-  xml_set_attr(fees_q2, "currCode", "EUR")
-
-  fees_q3 <- xml_add_child(fees, "dpi:FeesQ3", "0")
-  xml_set_attr(fees_q3, "currCode", "EUR")
-
-  fees_q4 <- xml_add_child(fees, "dpi:FeesQ4", as.character(round(vendor$total_fees, 0)))
-  xml_set_attr(fees_q4, "currCode", "EUR")
-
-  # Taxes (set to 0 as not provided in source data)
-  taxes <- xml_add_child(personal_services, "dpi:Taxes")
-
-  tax_q1 <- xml_add_child(taxes, "dpi:TaxQ1", "0")
-  xml_set_attr(tax_q1, "currCode", "EUR")
-
-  tax_q2 <- xml_add_child(taxes, "dpi:TaxQ2", "0")
-  xml_set_attr(tax_q2, "currCode", "EUR")
-
-  tax_q3 <- xml_add_child(taxes, "dpi:TaxQ3", "0")
-  xml_set_attr(tax_q3, "currCode", "EUR")
-
-  tax_q4 <- xml_add_child(taxes, "dpi:TaxQ4", "0")
-  xml_set_attr(tax_q4, "currCode", "EUR")
+  # Taxes (set to 0 - not provided in source data; block is mandatory)
+  add_quarterly(personal_services, "Taxes", "Tax", c(0, 0, 0, 0))
 }
 
 #' Add a Reportable Seller to XML
 add_reportable_seller <- function(parent, vendor, year) {
+
   seller_node <- xml_add_child(parent, "dpi:ReportableSeller")
 
   # Identity section
@@ -469,7 +470,7 @@ add_reportable_seller <- function(parent, vendor, year) {
 #' @return xml_document object
 create_dpi_xml <- function(vendors, platform_operator, reporting_config) {
 
-  year <- substr(reporting_config$reporting_period, 1, 4)
+  year <- reporting_config$reporting_year
 
   # Namespace URIs
   ns_dpi <- "urn:oecd:ties:dpi:v1"
@@ -495,7 +496,8 @@ create_dpi_xml <- function(vendors, platform_operator, reporting_config) {
   xml_add_child(message_spec, "dpi:MessageType", "DPI")
   xml_add_child(message_spec, "dpi:MessageRefId",
                 generate_message_ref_id(reporting_config$transmitting_country,
-                                        reporting_config$receiving_country))
+                                        reporting_config$receiving_country,
+                                        year))
   xml_add_child(message_spec, "dpi:MessageTypeIndic", reporting_config$message_type_indic)
   xml_add_child(message_spec, "dpi:ReportingPeriod", reporting_config$reporting_period)
   xml_add_child(message_spec, "dpi:Timestamp", format(Sys.time(), "%Y-%m-%dT%H:%M:%S"))
@@ -540,10 +542,11 @@ cat("  - Individual sellers:", n_individuals, "\n\n")
 # Generate XML
 xml_doc <- create_dpi_xml(vendors, platform_operator, reporting_config)
 
+
 # Output file
-# Output file
+
 file_name <- paste0( "dpi_report_", format(Sys.Date(), "%Y%m%d"), ".xml")
-output_file <- file.path( main_path, file_name)
+output_file <- file.path( path_export, file_name )
 write_xml(xml_doc, output_file)
 
 cat("Output file:", output_file, "\n")
@@ -560,15 +563,20 @@ xml_text <- readLines(output_file, n = 100, warn = FALSE)
 cat(xml_text, sep = "\n")
 
 
+# VALIDATE
 
+doc <- read_xml(output_file)
 
+xsd <- read_xml(file.path(path_data, "xsd_validation", "DPIXML_v1.0.xsd"))
 
-doc <- read_xml(file.path(main_path, file_name))
+validation_result <- xml_validate(doc, xsd)
 
-xsd <- read_xml(file.path(main_path, "DPIXML_v1.0.xsd"))
-
-
-xml_validate(doc, xsd)
+if (isTRUE(validation_result)) {
+  cat("\nXSD validation: PASSED\n")
+} else {
+  cat("\nXSD validation: FAILED\n")
+  print(attr(validation_result, "errors"))
+}
 
 
 # MessageTypeIndic tells the tax authority what type of submission this is:
