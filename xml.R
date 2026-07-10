@@ -517,11 +517,22 @@ cat("  Message Type:", reporting_config$message_type_indic, "\n\n")
 cat("Processing", nrow(vendors), "vendors...\n")
 
 # Count entity vs individual sellers
-n_entities <- sum(sapply(vendors$company_reg, is_entity))
+n_entities <- sum(seller_is_entity)
 n_individuals <- nrow(vendors) - n_entities
 
 cat("  - Entity sellers (companies):", n_entities, "\n")
 cat("  - Individual sellers:", n_individuals, "\n\n")
+
+# Export producer classification (Entity vs Individual) to CSV
+classification <- vendors |>
+  mutate(
+    seller_type = if_else(sapply(vendors$company_reg, is_entity), "Entity", "Individual")
+  ) |> 
+  select(producer, seller_type,company_reg, tax_number, dob)
+
+classification_file <- file.path(path_export, paste0("seller_classification_", format(Sys.Date(), "%Y%m%d"), ".csv"))
+write.csv(classification, classification_file, row.names = FALSE, fileEncoding = "UTF-8")
+cat("Classification CSV:", classification_file, "\n\n")
 
 # Generate XML
 xml_doc <- create_dpi_xml(vendors, platform_operator, reporting_config)
