@@ -113,8 +113,8 @@ platform_operator <- list(
 reporting_config <- list(
   transmitting_country = "CY",
   receiving_country = "CY",
-  reporting_period = "2024-12-31",
-  reporting_year = "2024",  # PLACEHOLDER - set to the year being reported; used in DocRefId/MessageRefId
+  reporting_period = "2025-12-31",
+  reporting_year = "2025",  # PLACEHOLDER - set to the year being reported; used in DocRefId/MessageRefId
   message_type_indic = "DPI401"  # DPI401 = New data, DPI402 = Corrected data
 )
 
@@ -176,31 +176,10 @@ clean_iban <- function(iban) {
 #' Map country name to ISO 2-letter code
 map_country_name_to_code <- function(country_name) {
 
-  # country_map <- c(
-  #   "CYPRUS" = "CY",
-  #   "GREECE" = "GR",
-  #   "LITHUANIA" = "LT",
-  #   "ROMANIA" = "RO",
-  #   "KENYA" = "KE",
-  #   "UNITED KINGDOM" = "GB",
-  #   "GERMANY" = "DE",
-  #   "FRANCE" = "FR"
-  # )
-  #
-  # code <- country_map[toupper(country_name)]
-  # if (is.na(code)) return("CY")  # Default to Cyprus
-  # return(code)
-
-
   original_name <- country_name
   country_name <- countrycode::countryname(country_name)
 
   code <- countrycode::countrycode(country_name, 'country.name', destination = 'iso2c')
-
-  if (is.na(code)) {
-    message("Could not map country '", original_name, "' to an ISO code - defaulting to CY")
-    return("CY")  # Default to Cyprus
-  }
 
   return(code)
 
@@ -442,6 +421,11 @@ add_reportable_seller <- function(parent, vendor, year) {
   identity_node <- xml_add_child(seller_node, "dpi:Identity")
 
   country_code <- map_country_name_to_code(vendor$country_tax)
+
+  if (is.na(country_code)) {
+    message("Could not map country '", vendor$country_tax, " of vendor ", vendor$producer, "' to an ISO code - defaulting to CY")
+    country_code <- "CY"  # Default to Cyprus
+  }
 
   # Determine if entity or individual
   if (is_entity(vendor$company_reg)) {
