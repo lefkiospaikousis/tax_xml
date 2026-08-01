@@ -326,14 +326,22 @@ add_entity_seller <- function(parent, vendor, country_code) {
 }
 
 #' Add Individual Seller (Person) to XML
-add_individual_seller <- function(parent, vendor, country_code) {
+#' @param receiving_country the receiving jurisdiction's country code. Since we only ever
+#'   report PersonalServices (never ImmovableProperty), the portal requires at least one
+#'   ResCountryCode to equal the receiving country - added as an extra entry when the
+#'   seller's real residence country differs.
+add_individual_seller <- function(parent, vendor, country_code, receiving_country) {
   ind_seller <- xml_add_child(parent, "dpi:IndividualSeller")
   standard <- xml_add_child(ind_seller, "dpi:Standard")
   ind_seller_id <- xml_add_child(standard, "dpi:IndSellerID")
 
   xml_add_child(ind_seller_id, "dpi:ResCountryCode", country_code)
+  if (country_code != receiving_country) {
+    xml_add_child(ind_seller_id, "dpi:ResCountryCode", receiving_country)
+  }
 
   # TIN - prefer TAX NUMBER, fall back to the ID column, else unknown
+  tin_unknown <- FALSE
   if (!is.na(vendor$tax_number) && vendor$tax_number != "" && vendor$tax_number != "N/A") {
     tin_node <- xml_add_child(ind_seller_id, "dpi:TIN", vendor$tax_number)
     xml_set_attr(tin_node, "issuedBy", country_code)
@@ -343,6 +351,7 @@ add_individual_seller <- function(parent, vendor, country_code) {
   } else {
     tin_node <- xml_add_child(ind_seller_id, "dpi:TIN")
     xml_set_attr(tin_node, "unknown", "true")
+    tin_unknown <- TRUE
   }
 
   # VAT (placeholder - add if available in your data)
@@ -378,6 +387,16 @@ add_individual_seller <- function(parent, vendor, country_code) {
     # birth_date_node <- xml_add_child(birth_info, "dpi:BirthDate")
     # xml_set_attr(birth_date_node, "unknown", "true")
 
+  }
+
+  # BirthPlace - required by the tax portal whenever the TIN is unknown; no real
+  # birth-city/country data exists in the source, so use a filler City plus the
+  # seller's own resolved residence country as CountryCode
+  if (tin_unknown) {
+    birth_place <- xml_add_child(birth_info, "dpi:BirthPlace")
+    xml_add_child(birth_place, "dpi:City", "Unknown")
+    country_info <- xml_add_child(birth_place, "dpi:CountryInfo")
+    xml_add_child(country_info, "dpi:CountryCode", country_code)
   }
 
   # Financial Identifier (IBAN)
@@ -418,7 +437,11 @@ add_relevant_activities <- function(parent, vendor) {
 }
 
 #' Add a Reportable Seller to XML
-add_reportable_seller <- function(parent, vendor, year) {
+#' @param sending_country the transmitting jurisdiction's country code - DocRefId must always
+#'   start with this (per the OECD DPI User Guide), never the seller's own residence country
+#' @param receiving_country the receiving jurisdiction's country code (passed to individual
+#'   sellers, who must show it as a ResCountryCode when no immovable property is reported)
+add_reportable_seller <- function(parent, vendor, year, sending_country, receiving_country) {
 
   seller_node <- xml_add_child(parent, "dpi:ReportableSeller")
 
@@ -436,7 +459,7 @@ add_reportable_seller <- function(parent, vendor, year) {
   if (is_entity(vendor$company_reg)) {
     add_entity_seller(identity_node, vendor, country_code)
   } else {
-    add_individual_seller(identity_node, vendor, country_code)
+    add_individual_seller(identity_node, vendor, country_code, receiving_country)
   }
 
   # Relevant Activities (income, fees, etc.)
@@ -445,7 +468,7 @@ add_reportable_seller <- function(parent, vendor, year) {
   # DocSpec
   doc_spec <- xml_add_child(seller_node, "dpi:DocSpec")
   xml_add_child(doc_spec, "stf:DocTypeIndic", "OECD1")
-  xml_add_child(doc_spec, "stf:DocRefId", generate_doc_ref_id(country_code, year))
+  xml_add_child(doc_spec, "stf:DocRefId", generate_doc_ref_id(sending_country, year))
 }
 
 # ============================================================================
@@ -500,7 +523,9 @@ create_dpi_xml <- function(vendors, platform_operator, reporting_config) {
   # Reportable Sellers (one per vendor)
   for (i in seq_len(nrow(vendors))) {
     vendor <- vendors[i, ]
-    add_reportable_seller(dpi_body, vendor, year)
+    add_reportable_seller(dpi_body, vendor, year,
+                           reporting_config$transmitting_country,
+                           reporting_config$receiving_country)
   }
 
   return(doc)
