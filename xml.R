@@ -95,14 +95,19 @@ vendors <- vendors |>
 # ============================================================================
 
 platform_operator <- list(
-  tin = "CY12345678A",
-  vat = "CY12345678X",
-  name = "ACS COurier Services LTD",
-  business_name = "ACS Courier Services",
-  street = "Varkizas 14",
-  #building = "123",
-  #floor = "0",
-  postcode = "2033",
+  tin = "12307173V",
+  vat = "10307173T",
+  name = "Tickethour (Cyprus) Ltd",
+  business_name = "Tickethour",
+  street = "Giannou Kranidioti 10, Office 602",
+  postcode = "1065",
+  #name = "ACS Courier Services LTD",
+  #business_name = "ACS Courier Services",
+  #street = "Varkizas 14",
+
+  #building = "NICE DAY HOUSE",
+  #floor = "6",
+  #postcode = "2033",
   city = "Nicosia",
   district = "Nicosia",
   country_code = "CY"
@@ -516,6 +521,7 @@ cat("  Message Type:", reporting_config$message_type_indic, "\n\n")
 
 cat("Processing", nrow(vendors), "vendors...\n")
 
+seller_is_entity <- sapply(vendors$company_reg, is_entity)
 # Count entity vs individual sellers
 n_entities <- sum(seller_is_entity)
 n_individuals <- nrow(vendors) - n_entities
