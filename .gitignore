@@ -3,3 +3,16 @@
 .RData
 .Ruserdata
 exports
+skills-lock.json
+.agents/skills/cli/SKILL.md
+.agents/skills/cli/references/ansi-operations.md
+.agents/skills/cli/references/conditions.md
+.agents/skills/cli/references/inline-markup.md
+.agents/skills/cli/references/themes.md
+.claude/skills/cli/SKILL.md
+.claude/skills/cli/references/ansi-operations.md
+.claude/skills/cli/references/inline-markup.md
+.claude/skills/cli/references/progress.md
+.claude/skills/cli/references/themes.md
+.claude/skills/cli/references/conditions.md
+.agents/skills/cli/references/progress.md

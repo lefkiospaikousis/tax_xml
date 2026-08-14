@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"/c/Program Files/R/R-4.1.0/bin/x64/Rscript.exe\" -e 'cat\\(R.version.string, \"\\\\n\"\\); .libPaths\\(\\)')",
+      "Bash(\"/c/Program Files/R/R-4.1.0/bin/x64/Rscript.exe\" -e 'renv::status\\(\\)')",
+      "Bash(\"/c/Program Files/R/R-4.1.0/bin/x64/Rscript.exe\" -e 'renv::install\\(c\\(\"shiny\", \"DT\"\\)\\)')",
+      "Bash(\"/c/Program Files/R/R-4.1.0/bin/x64/Rscript.exe\" -e 'library\\(shiny\\); library\\(DT\\); cat\\(\"shiny\", as.character\\(packageVersion\\(\"shiny\"\\)\\), \"\\\\n\"\\); cat\\(\"DT\", as.character\\(packageVersion\\(\"DT\"\\)\\), \"\\\\n\"\\)')",
+      "Bash(\"/c/Program Files/R/R-4.1.0/bin/x64/Rscript.exe\" -e 'tryCatch\\({ parse\\(\"dpi_functions.R\"\\); cat\\(\"PARSE OK\\\\n\"\\) }, error = function\\(e\\) { cat\\(\"PARSE ERROR:\\\\n\"\\); print\\(e\\) }\\)')",
+      "Bash('/c/Program Files/R/R-4.1.0/bin/x64/Rscript.exe' -e ' *)",
+      "Bash(python3 -c ' *)",
+      "Bash(\"/c/Program Files/R/R-4.1.0/bin/x64/Rscript.exe\" -e 'tryCatch\\({ parse\\(\"app.R\"\\); cat\\(\"PARSE OK\\\\n\"\\) }, error = function\\(e\\) { cat\\(\"PARSE ERROR:\\\\n\"\\); print\\(e\\) }\\)')",
+      "Bash(tasklist)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://127.0.0.1:8791/ --max-time 5)",
+      "Bash(curl -s http://127.0.0.1:8791/ --max-time 5)"
+    ]
+  }
+}
