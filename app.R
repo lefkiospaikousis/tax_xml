@@ -109,6 +109,7 @@ ui <- fluidPage(
       h3("3. Results"),
       uiOutput("validation_banner"),
       uiOutput("summary_counts"),
+      uiOutput("excluded_banner"),
       fluidRow(
         column(6,
           div(class = "panel panel-warning",
@@ -298,11 +299,15 @@ server <- function(input, output, session) {
         mutate(seller_type = if_else(seller_is_entity, "Entity", "Individual")) |>
         select(producer, seller_type, company_reg, tax_number, dob)
 
+      excluded_df <- get_excluded_vendors(raw_upload()) |>
+        select(producer, country_tax)
+
       list(
         xml_doc = xml_doc,
         validation = validation_result,
         fallback_df = fallback_log_to_df(log),
         classification_df = classification_df,
+        excluded_df = excluded_df,
         n_entities = sum(seller_is_entity),
         n_individuals = nrow(vendors_df) - sum(seller_is_entity),
         n_total = nrow(vendors_df)
@@ -354,6 +359,17 @@ server <- function(input, output, session) {
     res <- generate_result()
     p(sprintf("Processed %d vendors: %d entity sellers (companies), %d individual sellers.",
               res$n_total, res$n_entities, res$n_individuals))
+  })
+
+  output$excluded_banner <- renderUI({
+    res <- generate_result()
+    if (nrow(res$excluded_df) == 0) return(NULL)
+    tagList(
+      div(class = "alert alert-warning",
+          strong(sprintf("%d producer(s) excluded from this report - no income was reported in any quarter (Q1-Q4 all zero/blank):",
+                         nrow(res$excluded_df)))),
+      tags$ul(lapply(res$excluded_df$producer, tags$li))
+    )
   })
 
   output$fallback_table <- renderDT({

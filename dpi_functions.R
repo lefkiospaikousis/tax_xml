@@ -110,11 +110,11 @@ parse_dob <- function(x) {
   parsed
 }
 
-#' Clean + reshape a raw vendors data frame (as read by readxl) into the
-#' snake_case, per-quarter-numeric shape the XML builders expect, and filter
-#' to rows with reportable annual income. Identical to xml.R's previous
-#' inline pipeline - extracted so both entry points share exactly one copy.
-clean_vendor_data <- function(raw) {
+#' Parse + reshape a raw vendors data frame (as read by readxl) into the
+#' snake_case, per-quarter-numeric shape the XML builders expect, WITHOUT
+#' filtering out rows with no reportable income - shared building block for
+#' clean_vendor_data() and get_excluded_vendors() so they can never drift.
+prepare_vendor_data <- function(raw) {
   vendors <- raw |>
     mutate(
       across(c(Q1_INCOME, Q2_INCOME, Q3_INCOME, Q4_INCOME,
@@ -142,12 +142,20 @@ clean_vendor_data <- function(raw) {
       trans_q1 = Q1_TRANSACTIONS, trans_q2 = Q2_TRANSACTIONS, trans_q3 = Q3_TRANSACTIONS, trans_q4 = Q4_TRANSACTIONS
     )
 
-  # keep only vendors with reportable annual income
-  vendors <- vendors |>
-    mutate(annual_income = income_q1 + income_q2 + income_q3 + income_q4) |>
-    filter(annual_income > 0)
+  vendors |> mutate(annual_income = income_q1 + income_q2 + income_q3 + income_q4)
+}
 
-  vendors
+#' Clean + reshape a raw vendors data frame, filtered to rows with reportable
+#' annual income - this is what actually goes into the XML.
+clean_vendor_data <- function(raw) {
+  prepare_vendor_data(raw) |> filter(annual_income > 0)
+}
+
+#' Producers excluded from the report because they have no reportable annual
+#' income (all four quarters zero/blank/"-"). Surfaced separately so a
+#' producer isn't silently missing from the XML with no explanation.
+get_excluded_vendors <- function(raw) {
+  prepare_vendor_data(raw) |> filter(annual_income <= 0)
 }
 
 # ============================================================================
