@@ -91,11 +91,8 @@ ui <- fluidPage(
                       selected = DEFAULTS$transmitting_country),
           selectInput("receiving_country", "Receiving country", choices = country_choices,
                       selected = DEFAULTS$receiving_country),
-          selectInput("message_type_indic", "Message type",
-                      choices = c("DPI401 - New data" = "DPI401",
-                                  "DPI402 - Corrected data" = "DPI402",
-                                  "DPI403 - Nil return" = "DPI403"),
-                      selected = DEFAULTS$message_type_indic),
+          textInput("message_type_indic", "Message type",
+                      value = DEFAULTS$message_type_indic),
           dateInput("placeholder_dob", "Placeholder DOB (used when a seller has no DOB on file)",
                     value = DEFAULTS$placeholder_dob)
         )
