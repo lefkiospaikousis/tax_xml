@@ -94,7 +94,7 @@ ui <- fluidPage(
           textInput("message_type_indic", "Message type",
                       value = DEFAULTS$message_type_indic),
           dateInput("placeholder_dob", "Placeholder DOB (used when a seller has no DOB on file)",
-                    value = DEFAULTS$placeholder_dob)
+                    value = DEFAULTS$placeholder_dob, format = 'dd/mm/yyyy')
         )
       ),
       uiOutput("config_errors_ui"),
@@ -111,14 +111,22 @@ ui <- fluidPage(
       uiOutput("summary_counts"),
       fluidRow(
         column(6,
-          h4("Missing data / fallback report"),
-          p("Every row records a place where the source data was missing or ambiguous, and how the tool filled the gap. Use the boxes below the column headers to filter."),
-          DTOutput("fallback_table")
+          div(class = "panel panel-warning",
+            div(class = "panel-heading", h2("Missing data / fallback report", style = "margin: 0; font-size: 18px;")),
+            div(class = "panel-body",
+              p("Every row records a place where the source data was missing or ambiguous, and how the tool filled the gap."),
+              DTOutput("fallback_table")
+            )
+          )
         ),
         column(6,
-          h4("Seller classification"),
-          p("Every reported producer and whether it was classified as a company (Entity) or a person (Individual)."),
-          DTOutput("classification_table")
+          div(class = "panel panel-info",
+            div(class = "panel-heading", h2("Seller classification", style = "margin: 0; font-size: 18px;")),
+            div(class = "panel-body",
+              p("Every reported producer and whether it was classified as a company (Entity) or a person (Individual)."),
+              DTOutput("classification_table")
+            )
+          )
         )
       ),
       br(),
@@ -325,7 +333,7 @@ server <- function(input, output, session) {
             strong("XSD validation: FAILED"), " - see the Results section below for details.")
       },
       easyClose = TRUE,
-      footer = modalButton("View results")
+      footer = modalButton("OK")
     ))
   })
 
