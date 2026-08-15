@@ -513,8 +513,11 @@ add_reportable_seller <- function(parent, vendor, year, sending_country, receivi
 #' @param placeholder_dob date string used when a seller has no DOB on file (default matches
 #'   the value historically hardcoded in xml.R)
 #' @param log optional fallback log (see new_fallback_log())
+#' @param progress_callback optional function(i, n) called after each vendor is processed,
+#'   for callers (e.g. the Shiny app) that want to show progress on a long run. No-op if NULL.
 #' @return xml_document object
-create_dpi_xml <- function(vendors, platform_operator, reporting_config, placeholder_dob = "1900-01-01", log = NULL) {
+create_dpi_xml <- function(vendors, platform_operator, reporting_config, placeholder_dob = "1900-01-01",
+                            log = NULL, progress_callback = NULL) {
 
   year <- reporting_config$reporting_year
 
@@ -555,13 +558,15 @@ create_dpi_xml <- function(vendors, platform_operator, reporting_config, placeho
   add_platform_operator(dpi_body, platform_operator, year, ns_dpi, ns_stf)
 
   # Reportable Sellers (one per vendor)
-  for (i in seq_len(nrow(vendors))) {
+  n_vendors <- nrow(vendors)
+  for (i in seq_len(n_vendors)) {
     vendor <- vendors[i, ]
     add_reportable_seller(dpi_body, vendor, year,
                            reporting_config$transmitting_country,
                            reporting_config$receiving_country,
                            placeholder_dob,
                            log)
+    if (!is.null(progress_callback)) progress_callback(i, n_vendors)
   }
 
   return(doc)

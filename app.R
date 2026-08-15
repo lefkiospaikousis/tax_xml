@@ -67,20 +67,23 @@ ui <- fluidPage(
     wellPanel(
       h3("2. Reporting configuration"),
       fluidRow(
-        column(6,
-          h4("Platform operator"),
+        column(4,
+          h5("Platform operator - identity"),
           textInput("tin", "TIN", DEFAULTS$tin),
           textInput("vat", "VAT", DEFAULTS$vat),
           textInput("name", "Legal name", DEFAULTS$name),
-          textInput("business_name", "Platform business name", DEFAULTS$business_name),
+          textInput("business_name", "Platform business name", DEFAULTS$business_name)
+        ),
+        column(4,
+          h5("Platform operator - address"),
           textInput("street", "Street", DEFAULTS$street),
           textInput("postcode", "Postcode", DEFAULTS$postcode),
           textInput("city", "City", DEFAULTS$city),
           textInput("district", "District", DEFAULTS$district),
           selectInput("po_country", "Country", choices = country_choices, selected = DEFAULTS$po_country)
         ),
-        column(6,
-          h4("Reporting period & submission"),
+        column(4,
+          h5("Reporting period & submission"),
           numericInput("year", "Reporting year", value = DEFAULTS$year,
                        min = 2020, max = current_year + 1, step = 1),
           helpText("Reporting period is always the full calendar year (Jan 1 - Dec 31) of the year above."),
@@ -93,7 +96,7 @@ ui <- fluidPage(
                                   "DPI402 - Corrected data" = "DPI402",
                                   "DPI403 - Nil return" = "DPI403"),
                       selected = DEFAULTS$message_type_indic),
-          dateInput("placeholder_dob", "Placeholder date of birth (used when a seller has no DOB on file)",
+          dateInput("placeholder_dob", "Placeholder DOB (used when a seller has no DOB on file)",
                     value = DEFAULTS$placeholder_dob)
         )
       ),
@@ -109,11 +112,18 @@ ui <- fluidPage(
       h3("3. Results"),
       uiOutput("validation_banner"),
       uiOutput("summary_counts"),
-      h4("Missing data / fallback report"),
-      p("Every row below records a place where the source data was missing or ambiguous, and how the tool filled the gap."),
-      DTOutput("fallback_table"),
-      h4("Seller classification"),
-      DTOutput("classification_table"),
+      fluidRow(
+        column(6,
+          h4("Missing data / fallback report"),
+          p("Every row records a place where the source data was missing or ambiguous, and how the tool filled the gap. Use the boxes below the column headers to filter."),
+          DTOutput("fallback_table")
+        ),
+        column(6,
+          h4("Seller classification"),
+          p("Every reported producer and whether it was classified as a company (Entity) or a person (Individual)."),
+          DTOutput("classification_table")
+        )
+      ),
       br(),
       downloadButton("download_xml", "Download XML"),
       downloadButton("download_classification", "Download classification CSV"),
@@ -252,46 +262,75 @@ server <- function(input, output, session) {
   ## ---- Generate ----
 
   generate_result <- eventReactive(input$generate, {
-    req(vendors_clean())
+    vendors_df <- vendors_clean()
+    req(vendors_df)
     validate(need(length(config_errors()) == 0,
                   "Please fix the configuration errors above before generating."))
 
     log <- new_fallback_log()
 
-    xml_doc <- tryCatch({
-      create_dpi_xml(vendors_clean(), platform_operator_cfg(), reporting_cfg(),
-                      placeholder_dob = as.character(input$placeholder_dob), log = log)
-    }, error = function(e) {
-      validate(paste("Could not generate the XML:", conditionMessage(e)))
+    withProgress(message = "Generating DPI XML...", value = 0, max = nrow(vendors_df), {
+
+      xml_doc <- tryCatch({
+        create_dpi_xml(vendors_df, platform_operator_cfg(), reporting_cfg(),
+                        placeholder_dob = as.character(input$placeholder_dob), log = log,
+                        progress_callback = function(i, n) {
+                          incProgress(1, detail = sprintf("seller %d of %d", i, n))
+                        })
+      }, error = function(e) {
+        validate(paste("Could not generate the XML:", conditionMessage(e)))
+      })
+
+      setProgress(detail = "Validating against the OECD schema...")
+      tmp <- tempfile(fileext = ".xml")
+      write_xml(xml_doc, tmp)
+
+      xsd <- read_xml(XSD_PATH)
+      validation_result <- xml_validate(read_xml(tmp), xsd)
+
+      seller_is_entity <- sapply(vendors_df$company_reg, is_entity)
+      classification_df <- vendors_df |>
+        mutate(seller_type = if_else(seller_is_entity, "Entity", "Individual")) |>
+        select(producer, seller_type, company_reg, tax_number, dob)
+
+      list(
+        xml_doc = xml_doc,
+        validation = validation_result,
+        fallback_df = fallback_log_to_df(log),
+        classification_df = classification_df,
+        n_entities = sum(seller_is_entity),
+        n_individuals = nrow(vendors_df) - sum(seller_is_entity),
+        n_total = nrow(vendors_df)
+      )
     })
-
-    tmp <- tempfile(fileext = ".xml")
-    write_xml(xml_doc, tmp)
-
-    xsd <- read_xml(XSD_PATH)
-    validation_result <- xml_validate(read_xml(tmp), xsd)
-
-    vendors_df <- vendors_clean()
-    seller_is_entity <- sapply(vendors_df$company_reg, is_entity)
-    classification_df <- vendors_df |>
-      mutate(seller_type = if_else(seller_is_entity, "Entity", "Individual")) |>
-      select(producer, seller_type, company_reg, tax_number, dob)
-
-    list(
-      xml_doc = xml_doc,
-      validation = validation_result,
-      fallback_df = fallback_log_to_df(log),
-      classification_df = classification_df,
-      n_entities = sum(seller_is_entity),
-      n_individuals = nrow(vendors_df) - sum(seller_is_entity),
-      n_total = nrow(vendors_df)
-    )
   })
 
   output$show_results <- reactive({
     !is.null(tryCatch(generate_result(), error = function(e) NULL))
   })
   outputOptions(output, "show_results", suspendWhenHidden = FALSE)
+
+  # Pop up a confirmation the moment generation finishes, so the user notices
+  # even though the Results section renders further down the page.
+  observeEvent(input$generate, {
+    res <- tryCatch(generate_result(), error = function(e) NULL)
+    req(res)
+    showModal(modalDialog(
+      title = "Conversion complete",
+      if (isTRUE(res$validation)) {
+        tagList(
+          div(class = "alert alert-success", strong("XSD validation: PASSED")),
+          p(sprintf("Processed %d vendors: %d entity sellers, %d individual sellers.",
+                    res$n_total, res$n_entities, res$n_individuals))
+        )
+      } else {
+        div(class = "alert alert-danger",
+            strong("XSD validation: FAILED"), " - see the Results section below for details.")
+      },
+      easyClose = TRUE,
+      footer = modalButton("View results")
+    ))
+  })
 
   output$validation_banner <- renderUI({
     res <- generate_result()
@@ -313,11 +352,13 @@ server <- function(input, output, session) {
   })
 
   output$fallback_table <- renderDT({
-    datatable(generate_result()$fallback_df, options = list(pageLength = 10), rownames = FALSE)
+    datatable(generate_result()$fallback_df, filter = "top", rownames = FALSE,
+              options = list(pageLength = 10, scrollX = TRUE))
   })
 
   output$classification_table <- renderDT({
-    datatable(generate_result()$classification_df, options = list(pageLength = 10), rownames = FALSE)
+    datatable(generate_result()$classification_df, filter = "top", rownames = FALSE,
+              options = list(pageLength = 10, scrollX = TRUE))
   })
 
   ## ---- Downloads ----
