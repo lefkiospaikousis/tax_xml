@@ -16,3 +16,4 @@ skills-lock.json
 .claude/skills/cli/references/themes.md
 .claude/skills/cli/references/conditions.md
 .agents/skills/cli/references/progress.md
+logs/
