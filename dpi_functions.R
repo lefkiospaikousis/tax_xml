@@ -195,13 +195,25 @@ clean_iban <- function(iban) {
 }
 
 #' Map country name to ISO 2-letter code
+#'
+#' countrycode's regex matching is slow (~50 ms per call) and was ~80% of the
+#' total XML build time, so results are memoised per distinct input name -
+#' a file has hundreds of sellers but only a handful of distinct countries.
+.country_code_cache <- new.env(parent = emptyenv())
+
 map_country_name_to_code <- function(country_name) {
 
-  original_name <- country_name
-  country_name <- countrycode::countryname(country_name)
+  key <- if (is.null(country_name) || length(country_name) == 0 || is.na(country_name)) {
+    "<NA>"
+  } else {
+    as.character(country_name)
+  }
+  if (!is.null(.country_code_cache[[key]])) return(.country_code_cache[[key]])
 
-  code <- countrycode::countrycode(country_name, 'country.name', destination = 'iso2c')
+  code <- countrycode::countrycode(countrycode::countryname(country_name),
+                                   'country.name', destination = 'iso2c')
 
+  .country_code_cache[[key]] <- code
   return(code)
 
 }
