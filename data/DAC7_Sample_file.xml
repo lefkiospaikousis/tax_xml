@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dpi:DPI_OECD version="1.0" xsi:schemaLocation="urn:oecd:ties:dpi:v1 DPIXML_v1.0.xsd"
+xmlns:dpi="urn:oecd:ties:dpi:v1" 
+xmlns:stf="urn:oecd:ties:dpistf:v1" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<dpi:MessageSpec>
+		<dpi:TransmittingCountry>CY</dpi:TransmittingCountry>
+		<dpi:ReceivingCountry>LU</dpi:ReceivingCountry>
+		<dpi:MessageType>DPI</dpi:MessageType>
+		<dpi:MessageRefId>CY2021LU-6f64600c-5e61-4486-9ceb-84344b508adf</dpi:MessageRefId>
+		<dpi:MessageTypeIndic>DPI401</dpi:MessageTypeIndic>
+		<dpi:ReportingPeriod>2021-12-31</dpi:ReportingPeriod>
+		<dpi:Timestamp>2023-02-01T12:00:00</dpi:Timestamp>
+	</dpi:MessageSpec>
+	<dpi:DPIBody>
+		<dpi:PlatformOperator>
+			<dpi:ResCountryCode>CY</dpi:ResCountryCode>
+			<dpi:TIN issuedBy="CY">1945885445215</dpi:TIN>
+			<dpi:TIN issuedBy="CZ">451031544</dpi:TIN>
+			<dpi:IN INType="LEI">2023599844</dpi:IN>
+			<dpi:IN issuedBy="HU" INType="EIN">658445123</dpi:IN>
+			<dpi:VAT>CY116727721</dpi:VAT>
+			<dpi:Name>Segers Company</dpi:Name>
+			<dpi:PlatformBusinessName>Segers</dpi:PlatformBusinessName>
+			<dpi:Address legalAddressType="OECD304">
+				<dpi:CountryCode>CY</dpi:CountryCode>
+				<dpi:AddressFix>
+					<dpi:Street>Makariou Avenue</dpi:Street>
+					<dpi:BuildingIdentifier>15</dpi:BuildingIdentifier>
+					<dpi:SuiteIdentifier>3</dpi:SuiteIdentifier>
+					<dpi:FloorIdentifier>5</dpi:FloorIdentifier>
+					<dpi:DistrictName>Nicosia</dpi:DistrictName>
+					<dpi:PostCode>1065</dpi:PostCode>
+					<dpi:City>Nicosia</dpi:City>
+				</dpi:AddressFix>
+			</dpi:Address>
+			<dpi:Nexus>RPONEX1</dpi:Nexus>
+			<dpi:AssumedReporting>false</dpi:AssumedReporting>
+			<dpi:DocSpec>
+				<stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+				<stf:DocRefId>CY2021202125308974-0c67-4d19-9ddc-a146c6490816</stf:DocRefId>
+			</dpi:DocSpec>
+		</dpi:PlatformOperator>
+		<dpi:OtherPlatformOperators>
+			<dpi:AssumedPlatformOperator>
+				<dpi:ResCountryCode>LU</dpi:ResCountryCode>
+				<dpi:ResCountryCode>CZ</dpi:ResCountryCode>
+				<dpi:TIN issuedBy="LU">84511259845</dpi:TIN>
+				<dpi:TIN issuedBy="CZ">85652156594</dpi:TIN>
+				<dpi:Name>Plexzap</dpi:Name>
+				<dpi:Address legalAddressType="OECD305">
+					<dpi:CountryCode>LU</dpi:CountryCode>
+					<dpi:AddressFix>
+						<dpi:Street>Boulevard Joseph</dpi:Street> 
+						<dpi:BuildingIdentifier>39</dpi:BuildingIdentifier>
+						<dpi:PostCode>L-1840</dpi:PostCode>
+						<dpi:City>Luxembourg</dpi:City>
+						<dpi:CountrySubentity>Luxembourg</dpi:CountrySubentity>
+					</dpi:AddressFix>
+				</dpi:Address>
+				<dpi:DocSpec>
+					<stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+					<stf:DocRefId>CY20212a015814-9639-4b58-8934-0ee036124ef5</stf:DocRefId>
+				</dpi:DocSpec>
+			</dpi:AssumedPlatformOperator>
+		</dpi:OtherPlatformOperators>
+		<dpi:ReportableSeller>
+			<dpi:Identity>
+				<dpi:EntitySeller>
+					<dpi:Standard>
+						<dpi:EntSellerID>
+							<dpi:ResCountryCode>LU</dpi:ResCountryCode>
+							<dpi:TIN unknown="true"/>
+							<dpi:IN issuedBy="LU" INType="BRN">F5455B65</dpi:IN>
+							<dpi:VAT>CY0783688338</dpi:VAT>
+							<dpi:Name>Hatfan</dpi:Name>
+							<dpi:Address legalAddressType="OECD301">
+								<dpi:CountryCode>LU</dpi:CountryCode>
+								<dpi:AddressFree>4 A, Z.I. Am Brill, Ehlange</dpi:AddressFree>
+							</dpi:Address>
+						</dpi:EntSellerID>
+						<dpi:FinancialIdentifier>
+							<dpi:Identifier AccountNumberType="IBAN">LU530107568527666161</dpi:Identifier>
+							<dpi:OtherInfo>Personal account number</dpi:OtherInfo>
+						</dpi:FinancialIdentifier>
+						<dpi:PermanentEstablishments>
+							<dpi:PermanentEstablishment>LU</dpi:PermanentEstablishment>
+						</dpi:PermanentEstablishments>
+					</dpi:Standard>
+				</dpi:EntitySeller>
+			</dpi:Identity>
+			<dpi:RelevantActivities>
+				<dpi:ImmovableProperty>
+					<dpi:PropertyListing>
+						<dpi:Address legalAddressType="OECD305">
+							<dpi:CountryCode>LU</dpi:CountryCode>
+							<dpi:AddressFree>7, R. Jean-Pierre Kemp, Strassen</dpi:AddressFree>
+						</dpi:Address>
+						<dpi:LandRegistrationNumber>6599DD5</dpi:LandRegistrationNumber>
+						<dpi:Consideration>
+							<dpi:ConsQ1 currCode="EUR">17104</dpi:ConsQ1>
+							<dpi:ConsQ2 currCode="EUR">7654</dpi:ConsQ2>
+							<dpi:ConsQ3 currCode="EUR">23981</dpi:ConsQ3>
+							<dpi:ConsQ4 currCode="EUR">362874</dpi:ConsQ4>
+						</dpi:Consideration>
+						<dpi:NumberOfActivities>
+							<dpi:NumbQ1>104</dpi:NumbQ1>
+							<dpi:NumbQ2>80</dpi:NumbQ2>
+							<dpi:NumbQ3>131</dpi:NumbQ3>
+							<dpi:NumbQ4>229</dpi:NumbQ4>
+						</dpi:NumberOfActivities>
+						<dpi:Fees>
+							<dpi:FeesQ1 currCode="EUR">1311</dpi:FeesQ1>
+							<dpi:FeesQ2 currCode="EUR">659</dpi:FeesQ2>
+							<dpi:FeesQ3 currCode="EUR">1896</dpi:FeesQ3>
+							<dpi:FeesQ4 currCode="EUR">4379</dpi:FeesQ4>
+						</dpi:Fees>
+						<dpi:Taxes>
+							<dpi:TaxQ1 currCode="EUR">3198</dpi:TaxQ1>
+							<dpi:TaxQ2 currCode="EUR">1581</dpi:TaxQ2>
+							<dpi:TaxQ3 currCode="EUR">4279</dpi:TaxQ3>
+							<dpi:TaxQ4 currCode="EUR">10835</dpi:TaxQ4>
+						</dpi:Taxes>
+						<dpi:PropertyType>DPI905</dpi:PropertyType>
+						<dpi:RentedDays>184</dpi:RentedDays>
+					</dpi:PropertyListing>
+				</dpi:ImmovableProperty>
+				<dpi:PersonalServices>
+					<dpi:Consideration>
+						<dpi:ConsQ1 currCode="EUR">169332</dpi:ConsQ1>
+						<dpi:ConsQ2 currCode="EUR">114854</dpi:ConsQ2>
+						<dpi:ConsQ3 currCode="EUR">56321</dpi:ConsQ3>
+						<dpi:ConsQ4 currCode="EUR">256000</dpi:ConsQ4>
+					</dpi:Consideration>
+					<dpi:NumberOfActivities>
+						<dpi:NumbQ1>15</dpi:NumbQ1>
+						<dpi:NumbQ2>10</dpi:NumbQ2>
+						<dpi:NumbQ3>5</dpi:NumbQ3>
+						<dpi:NumbQ4>20</dpi:NumbQ4>
+					</dpi:NumberOfActivities>
+					<dpi:Fees>
+						<dpi:FeesQ1 currCode="EUR">21856</dpi:FeesQ1>
+						<dpi:FeesQ2 currCode="EUR">14236</dpi:FeesQ2>
+						<dpi:FeesQ3 currCode="EUR">7501</dpi:FeesQ3>
+						<dpi:FeesQ4 currCode="EUR">35162</dpi:FeesQ4>
+					</dpi:Fees>
+					<dpi:Taxes>
+						<dpi:TaxQ1 currCode="EUR">31254</dpi:TaxQ1>
+						<dpi:TaxQ2 currCode="EUR">19654</dpi:TaxQ2>
+						<dpi:TaxQ3 currCode="EUR">9523</dpi:TaxQ3>
+						<dpi:TaxQ4 currCode="EUR">45632</dpi:TaxQ4>
+					</dpi:Taxes>
+				</dpi:PersonalServices>
+				<dpi:SaleOfGoods>
+					<dpi:Consideration>
+						<dpi:ConsQ1 currCode="EUR">17728</dpi:ConsQ1>
+						<dpi:ConsQ2 currCode="EUR">15566</dpi:ConsQ2>
+						<dpi:ConsQ3 currCode="EUR">14382</dpi:ConsQ3>
+						<dpi:ConsQ4 currCode="EUR">15057</dpi:ConsQ4>
+					</dpi:Consideration>
+					<dpi:NumberOfActivities>
+						<dpi:NumbQ1>13</dpi:NumbQ1>
+						<dpi:NumbQ2>14</dpi:NumbQ2>
+						<dpi:NumbQ3>14</dpi:NumbQ3>
+						<dpi:NumbQ4>15</dpi:NumbQ4>
+					</dpi:NumberOfActivities>
+					<dpi:Fees>
+						<dpi:FeesQ1 currCode="EUR">870</dpi:FeesQ1>
+						<dpi:FeesQ2 currCode="EUR">74</dpi:FeesQ2>
+						<dpi:FeesQ3 currCode="EUR">1094</dpi:FeesQ3>
+						<dpi:FeesQ4 currCode="EUR">1052</dpi:FeesQ4>
+					</dpi:Fees>
+					<dpi:Taxes>
+						<dpi:TaxQ1 currCode="EUR">1770</dpi:TaxQ1>
+						<dpi:TaxQ2 currCode="EUR">1266</dpi:TaxQ2>
+						<dpi:TaxQ3 currCode="EUR">1088</dpi:TaxQ3>
+						<dpi:TaxQ4 currCode="EUR">1030</dpi:TaxQ4>
+					</dpi:Taxes>
+				</dpi:SaleOfGoods>
+				<dpi:TransportationRental>
+					<dpi:Consideration>
+						<dpi:ConsQ1 currCode="EUR">79824</dpi:ConsQ1>
+						<dpi:ConsQ2 currCode="EUR">70095</dpi:ConsQ2>
+						<dpi:ConsQ3 currCode="EUR">64767</dpi:ConsQ3>
+						<dpi:ConsQ4 currCode="EUR">67806</dpi:ConsQ4>
+					</dpi:Consideration>
+					<dpi:NumberOfActivities>
+						<dpi:NumbQ1>62</dpi:NumbQ1>
+						<dpi:NumbQ2>65</dpi:NumbQ2>
+						<dpi:NumbQ3>68</dpi:NumbQ3>
+						<dpi:NumbQ4>71</dpi:NumbQ4>
+					</dpi:NumberOfActivities>
+					<dpi:Fees>
+						<dpi:FeesQ1 currCode="EUR">396</dpi:FeesQ1> 
+						<dpi:FeesQ2 currCode="EUR">381</dpi:FeesQ2>
+						<dpi:FeesQ3 currCode="EUR">4971</dpi:FeesQ3>
+						<dpi:FeesQ4 currCode="EUR">4785</dpi:FeesQ4>
+					</dpi:Fees>
+					<dpi:Taxes>
+						<dpi:TaxQ1 currCode="EUR">816</dpi:TaxQ1> 
+						<dpi:TaxQ2 currCode="EUR">5748</dpi:TaxQ2>
+						<dpi:TaxQ3 currCode="EUR">4947</dpi:TaxQ3>
+						<dpi:TaxQ4 currCode="EUR">4683</dpi:TaxQ4>
+					</dpi:Taxes>
+				</dpi:TransportationRental>
+			</dpi:RelevantActivities>
+			<dpi:DocSpec>
+				<stf:DocTypeIndic>OECD1</stf:DocTypeIndic>
+				<stf:DocRefId>CY2021c9856c61-4fc8-4414-a8c7-c4cad9ed2709</stf:DocRefId>
+			</dpi:DocSpec>
+		</dpi:ReportableSeller>
+	</dpi:DPIBody>
+</dpi:DPI_OECD>
