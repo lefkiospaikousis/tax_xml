@@ -21,14 +21,12 @@ change them in every command.
 
 ## 0. Before you go to the server: push
 
-Locally the branch is called `main`, but it tracks `master` on GitHub, so a
-plain `git push` will refuse. Push with:
-
 ```cmd
-git push origin main:master
+git push
 ```
 
-Anything not pushed will not be on the server.
+Anything not pushed will not be on the server. The branch is `master`, both
+locally and on GitHub.
 
 ---
 
